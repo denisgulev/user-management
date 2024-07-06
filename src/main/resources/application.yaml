@@ -1,0 +1,19 @@
+ktor:
+    application:
+        modules:
+            - example.com.ApplicationKt.module
+    deployment:
+        port: 8080
+jwt:
+  domain: "https://jwt-provider-domain/"
+  audience: "jwt-audience"
+  realm: "ktor sample app"
+db:
+  mongo:
+    user: myuser
+    password: mypassword
+    host: localhost
+    port: 27017
+    maxPoolSize: 20
+    database:
+      name: users

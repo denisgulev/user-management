@@ -1,0 +1,126 @@
+openapi: 3.0.0
+info:
+  title: User API
+  version: 1.0.0
+  description: |
+    This Swagger documentation file outlines the API specifications for a User application built with Ktor and MongoDB. The API allows users to manage user records including creating new records, updating and deleting records by ID. The API uses the User data classes.
+
+paths:
+  /users:
+    post:
+      summary: Create a new user record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: Fitness created successfully
+        '400':
+          description: Bad request
+  /users/{id}:
+    get:
+      summary: Retrieve user record by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example: {}
+        '404':
+          description: User not found
+#    delete:
+#      summary: Delete user record by ID
+#      parameters:
+#        - name: id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#      responses:
+#        '200':
+#          description: User deleted successfully
+#        '400':
+#          description: Bad request
+#        '404':
+#          description: User not found
+#    patch:
+#      summary: Update user record by ID
+#      parameters:
+#        - name: id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/UserRequest'
+#      responses:
+#        '200':
+#          description: User updated successfully
+#        '400':
+#          description: Bad request
+#        '404':
+#          description: User not found
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        passwordHash:
+          type: string
+      required:
+        - id
+        - username
+        - email
+        - passwordHash
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        passwordHash:
+          type: string
+      required:
+        - id
+        - username
+        - email
+        - passwordHash
+
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - email
+        - password

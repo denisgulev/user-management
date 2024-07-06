@@ -1,15 +1,12 @@
-# user-management
+# User Management
 
 1. Implement API to create and retrieve a user
 
-// TODO
-2. Add functionality to allow the login of a user with password and create a token for successful login
+2. Add functionality to allow the login of a user with password and create a token for successful login -> **TODO**
 
-// TODO
-3. Create an ADMIN user, which will be the only one to be able to create a user
+3. Create an ADMIN user, which will be the only one to be able to create a user -> **TODO**
 
-// TODO
-4. Containerize the application, use ARGS / ENV to receive variables for mongo connection and jwt info
+4. Containerize the application, use ARGS / ENV to receive variables for mongo connection and jwt info -> **TODO**
 
 ---------
 

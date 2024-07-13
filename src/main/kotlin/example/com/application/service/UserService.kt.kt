@@ -20,13 +20,15 @@ class UserService(
         repository.findById(ObjectId(id))
     }
 
-//    // Update a user
-//    suspend fun update(id: String, user: User): Document? = withContext(Dispatchers.IO) {
-//        collection.findOneAndReplace(Filters.eq("_id", ObjectId(id)), car.toDocument())
-//    }
-//
-//    // Delete a user
-//    suspend fun delete(id: String): Document? = withContext(Dispatchers.IO) {
-//        collection.findOneAndDelete(Filters.eq("_id", ObjectId(id)))
-//    }
+    override suspend fun findAllUsers(): List<User> = withContext(Dispatchers.IO) {
+        repository.findAll()
+    }
+
+    override suspend fun updateUser(id: String, user: User): User? = withContext(Dispatchers.IO) {
+        repository.update(ObjectId(id), user)
+    }
+
+    override suspend fun removeUser(id: String): Boolean = withContext(Dispatchers.IO) {
+        repository.remove(ObjectId(id))
+    }
 }

@@ -3,13 +3,14 @@ package example.com.application.schema
 import kotlinx.serialization.Serializable
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
+import org.jetbrains.annotations.NotNull
 
 data class User(
     @BsonId
-    val id: ObjectId,
-    val username: String,
-    val email: String,
-    val passwordHash: String
+    val id: ObjectId? = null,
+    val username: String? = null,
+    val email: String? = null,
+    val passwordHash: String? = null
 ) {
     fun toResponse() = UserResponse(
         id = id.toString(),
@@ -21,16 +22,19 @@ data class User(
 
 @Serializable
 data class UserResponse(
-    val id: String,
-    val username: String,
-    val email: String,
-    val passwordHash: String
+    val id: String? = null,
+    val username: String? = null,
+    val email: String? = null,
+    val passwordHash: String? = null
 )
 
 @Serializable
-data class UserRequest(
+data class UserCreate(
+    @NotNull
     val username: String,
+    @NotNull
     val email: String,
+    @NotNull
     val password: String
 ) {
     fun toDomain() = User(
@@ -38,5 +42,18 @@ data class UserRequest(
         username = username,
         email = email,
         passwordHash = password
+    )
+}
+
+@Serializable
+data class UserUpdate(
+    @NotNull
+    val username: String,
+    @NotNull
+    val email: String
+) {
+    fun toDomain() = User(
+        username = username,
+        email = email
     )
 }

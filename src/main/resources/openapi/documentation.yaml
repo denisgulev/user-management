@@ -8,6 +8,7 @@ info:
 paths:
   /users:
     post:
+      operationId: createUser
       summary: Create a new user record
       requestBody:
         required: true
@@ -17,15 +18,31 @@ paths:
               $ref: '#/components/schemas/UserRequest'
       responses:
         '201':
-          description: Fitness created successfully
+          description: User created successfully
         '400':
           description: Bad request
-  /users/{id}:
     get:
+      operationId: getUsers
+      summary: Create a new user record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Bad request
+  /users/{id?}:
+    get:
+      operationId: getUserById
       summary: Retrieve user record by ID
       parameters:
         - name: id
           in: path
+          description: User ID
           required: true
           schema:
             type: string
@@ -34,45 +51,47 @@ paths:
           description: Successful response
           content:
             application/json:
-              example: {}
+              schema:
+                $ref: '#components/schemas/UserResponse'
         '404':
           description: User not found
-#    delete:
-#      summary: Delete user record by ID
-#      parameters:
-#        - name: id
-#          in: path
-#          required: true
-#          schema:
-#            type: string
-#      responses:
-#        '200':
-#          description: User deleted successfully
-#        '400':
-#          description: Bad request
-#        '404':
-#          description: User not found
-#    patch:
-#      summary: Update user record by ID
-#      parameters:
-#        - name: id
-#          in: path
-#          required: true
-#          schema:
-#            type: string
-#      requestBody:
-#        required: true
-#        content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/UserRequest'
-#      responses:
-#        '200':
-#          description: User updated successfully
-#        '400':
-#          description: Bad request
-#        '404':
-#          description: User not found
+    delete:
+      operationId: deleteUserById
+      summary: Delete user record by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully
+        '400':
+          description: Bad request
+        '404':
+          description: User not found
+    patch:
+      summary: Update user record by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+        '400':
+          description: Bad request
+        '404':
+          description: User not found
 
 components:
   schemas:
@@ -124,3 +143,14 @@ components:
         - username
         - email
         - password
+
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+      required:
+        - username
+        - email

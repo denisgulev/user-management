@@ -1,6 +1,7 @@
 # User Management
 
 1. Implement API to create and retrieve a user
+   a. add also update and delete user APIs
 
 2. Add functionality to allow the login of a user with password and create a token for successful login -> **TODO**
 

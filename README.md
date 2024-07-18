@@ -1,9 +1,13 @@
 # User Management
 
-1. Implement API to create and retrieve a user
-   a. add also update and delete user APIs
+1. Implement API to create and retrieve a user 
+   1. add also update and delete user APIs
 
-2. Add functionality to allow the login of a user with password and create a token for successful login -> **TODO**
+2. Add functionality to allow the login of a user with password and create a token for successful login -> **~~TODO~~** **DONE**
+   
+   - added "/users/login" route to verify username/password correctness and generate a response with user's info and a token
+   - implemented a TokenService to handle the creation of a token on successful login of a user
+   - implemented inject functionality using Koin [koin-integration](./implementations/koin-integration.md)
 
 3. Create an ADMIN user, which will be the only one to be able to create a user -> **TODO**
 
@@ -26,7 +30,7 @@ This microservice handles user authentication and authorization for your applica
 
 1. **Clone the repository**:
 
-    ```bash
+    ```
     git clone https://github.com/denis.gulev/user-management.git
     cd user-management
     ```
@@ -41,14 +45,16 @@ This microservice handles user authentication and authorization for your applica
 
 1. **Build and run the application using Docker Compose:**
     1. build the application as a fatJar
-   ```bash
+   ```
    ./gradlew :buildFatJar 
    ```
 
 4. **Run the application**:
 
-    ```bash
+    ```
     ./gradlew run
     ```
 
 The application will start on `http://localhost:8080`.
+
+

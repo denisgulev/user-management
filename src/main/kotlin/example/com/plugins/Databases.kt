@@ -1,37 +1,23 @@
 package example.com.plugins
 
 import com.mongodb.kotlin.client.coroutine.MongoClient
-import example.com.application.repository.IUserRepository
-import example.com.application.repository.UserRepositoryImpl
-import example.com.application.service.IUserService
-import example.com.application.service.UserService
+import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import example.com.application.config.ApplicationConfig
 import io.ktor.server.application.*
 import io.ktor.server.config.*
-import org.koin.dsl.module
-import org.koin.ktor.plugin.Koin
-import org.koin.logger.slf4jLogger
+import org.koin.core.annotation.Module
+import org.koin.core.annotation.Single
 
-fun Application.configureDatabases(environment: ApplicationEnvironment) {
-    install(Koin) {
-        slf4jLogger()
-        modules(
-            module {
-                single {
-                    createMongoClient(environment)
-                }
-                single {
-                    get<MongoClient>().getDatabase(
-                        environment.config.tryGetString("db.mongo.database.name") ?: "myDatabase"
-                    )
-                }
-            },
-            module {
-                single<IUserRepository> { UserRepositoryImpl(get()) }
-            },
-            module {
-                single<IUserService> { UserService(get()) }
-            }
-        )
+@Module
+class DatabaseModule() {
+    @Single
+    fun provideMongoClient(config: ApplicationConfig, environment: ApplicationEnvironment): MongoClient {
+        return createMongoClient(config, environment)
+    }
+
+    @Single
+    fun provideMongoDatabase(mongoClient: MongoClient, config: ApplicationConfig): MongoDatabase {
+        return mongoClient.getDatabase(config.applicationConfiguration.tryGetString("db.mongo.database.name") ?: "myDatabase")
     }
 }
 
@@ -48,17 +34,17 @@ fun Application.configureDatabases(environment: ApplicationEnvironment) {
  *
  * IMPORTANT NOTE: in order to make MongoDB connection working, you have to start a MongoDB server first.
  * See the instructions here: https://www.mongodb.com/docs/manual/administration/install-community/
- * all the paramaters above
+ * all the parameters above
  *
  * @returns [MongoClient] instance
  * */
-fun createMongoClient(environment: ApplicationEnvironment): MongoClient {
-    val user = environment.config.tryGetString("db.mongo.user")
-    val password = environment.config.tryGetString("db.mongo.password")
-    val host = environment.config.tryGetString("db.mongo.host") ?: "127.0.0.1"
-    val port = environment.config.tryGetString("db.mongo.port") ?: "27017"
-    val maxPoolSize = environment.config.tryGetString("db.mongo.maxPoolSize")?.toInt() ?: 20
-    val databaseName = environment.config.tryGetString("db.mongo.database.name") ?: "myDatabase"
+fun createMongoClient(config: ApplicationConfig, environment: ApplicationEnvironment): MongoClient {
+    val user = config.applicationConfiguration.tryGetString("db.mongo.user")
+    val password = config.applicationConfiguration.tryGetString("db.mongo.password")
+    val host = config.applicationConfiguration.tryGetString("db.mongo.host") ?: "127.0.0.1"
+    val port = config.applicationConfiguration.tryGetString("db.mongo.port") ?: "27017"
+    val maxPoolSize = config.applicationConfiguration.tryGetString("db.mongo.maxPoolSize")?.toInt() ?: 20
+    val databaseName = config.applicationConfiguration.tryGetString("db.mongo.database.name") ?: "myDatabase"
 
     val credentials = user?.let { userVal -> password?.let { passwordVal -> "$userVal:$passwordVal@" } }.orEmpty()
     val uri = "mongodb://$credentials$host:$port/?maxPoolSize=$maxPoolSize&w=majority"

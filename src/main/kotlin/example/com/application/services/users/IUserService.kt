@@ -1,6 +1,6 @@
-package example.com.application.service
+package example.com.application.services.users
 
-import example.com.application.schema.User
+import example.com.application.models.User
 
 interface IUserService {
     /**
@@ -33,4 +33,11 @@ interface IUserService {
      * @return true if the user is removed, false if the user is not found
      */
     suspend fun removeUser(id: String): Boolean
+    /**
+     * Check if username and password are correct
+     * @param username Username
+     * @param password Password
+     * @return User? User if username and password are correct, null otherwise
+     */
+    suspend fun checkUserNameAndPassword(username: String, password: String): User?
 }

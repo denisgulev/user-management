@@ -1,23 +1,29 @@
 package example.com.application.repository
 
 import com.mongodb.MongoException
-import com.mongodb.client.model.*
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.FindOneAndUpdateOptions
+import com.mongodb.client.model.ReturnDocument
+import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import example.com.application.schema.User
+import com.toxicbakery.bcrypt.Bcrypt
+import example.com.application.config.ApplicationConfig
+import example.com.application.models.User
+import io.ktor.server.config.*
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.bson.BsonValue
 import org.bson.types.ObjectId
+import org.koin.core.annotation.Single
 
+@Single
 class UserRepositoryImpl(
-    private val mongoDatabase: MongoDatabase
+    mongoDatabase: MongoDatabase,
+    appConfig: ApplicationConfig
 ) : IUserRepository {
 
-    companion object {
-        const val USER_COLLECTION = "user"
-    }
-
-    val db = mongoDatabase.getCollection<User>(USER_COLLECTION)
+    private val userCollection = appConfig.applicationConfiguration.tryGetString("db.mongo.database.name") ?: "user"
+    private val db = mongoDatabase.getCollection<User>(userCollection)
 
     override suspend fun insertOne(user: User): BsonValue? {
         try {
@@ -54,4 +60,19 @@ class UserRepositoryImpl(
         db.deleteOne(
             filter = Filters.eq("_id", objectId)
         ).deletedCount == 1L
+
+    override suspend fun checkUserNameAndPassword(username: String, password: String): User? {
+        val user = findByUsername(username)
+        return user?.let {
+            if (Bcrypt.verify(password, user.password.encodeToByteArray())) {
+                return user
+            }
+            return null
+        }
+    }
+
+    override suspend fun findByUsername(username: String): User? =
+        db.withDocumentClass<User>()
+            .find(Filters.eq(User::username.name, username))
+            .firstOrNull()
 }

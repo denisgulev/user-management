@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     configureSerialization()
-    configureDatabases(environment)
+    configureDI(environment)
 //    configureSecurity()
     configureRouting()
 }

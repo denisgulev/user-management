@@ -1,8 +1,13 @@
 package example.com.plugins
 
-import example.com.application.schema.UserCreate
-import example.com.application.schema.UserUpdate
-import example.com.application.service.IUserService
+import example.com.application.dto.UserCreate
+import example.com.application.dto.UserLogin
+import example.com.application.dto.UserUpdate
+import example.com.application.dto.UserWithTokenDto
+import example.com.application.mappers.toDto
+import example.com.application.mappers.toModel
+import example.com.application.services.tokens.TokenService
+import example.com.application.services.users.UserService
 import io.ktor.http.*
 import io.ktor.serialization.*
 import io.ktor.server.application.*
@@ -13,7 +18,8 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
-    val service by inject<IUserService>()
+    val service: UserService by inject()
+    val tokenService: TokenService by inject()
 
     routing {
         swaggerUI(path = "swagger-ui", swaggerFile = "openapi/documentation.yaml") {
@@ -25,9 +31,10 @@ fun Application.configureRouting() {
         // Create user
         post("/users") {
             try {
-                val user = call.receive<UserCreate>()
-                val id = service.createUser(user.toDomain())
-                call.respond(HttpStatusCode.Created, "Created user with id $id")
+                val user = call.receive<UserCreate>().toModel()
+                service.createUser(user).let {
+                    call.respond(HttpStatusCode.Created, "Created user with id $it")
+                }
             } catch (ex: IllegalStateException) {
                 call.respond(HttpStatusCode.BadRequest)
             } catch (ex: JsonConvertException) {
@@ -37,6 +44,20 @@ fun Application.configureRouting() {
         // Retrieve all users
         get("/users") {
             service.findAllUsers()
+            /*
+                    val userId = call.principal<JWTPrincipal>()
+                        ?.payload?.getClaim("userId")
+                        .toString().replace("\"", "").toLong()
+
+                    usersService.isAdmin(userId)
+                        .onSuccess {
+                            usersService.findAll().toList()
+                                .map { it.toDto() }
+                                .let { call.respond(HttpStatusCode.OK, it) }
+                        }.onFailure {
+                            handleUserError(it)
+                        }
+             */
         }
         // Retrieve a single user
         get("/users/{id?}") {
@@ -47,7 +68,7 @@ fun Application.configureRouting() {
                 )
 
             service.findUser(id)?.let {
-                call.respond(it.toResponse())
+                call.respond(it.toDto())
             } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
         }
         // Update user
@@ -58,8 +79,10 @@ fun Application.configureRouting() {
                     status = HttpStatusCode.NotFound
                 )
             val user = call.receive<UserUpdate>()
-            service.updateUser(id, user.toDomain())?.let {
-                call.respond(HttpStatusCode.OK)
+            service.findUser(id)?.let {
+                service.updateUser(id, it.copy(username = user.username, email = user.email))?.let {
+                    call.respond(HttpStatusCode.OK)
+                }
             } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
         }
         // Delete user
@@ -73,6 +96,20 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.OK)
             else
                 call.respond(HttpStatusCode.NotFound, "No records found for id $id")
+        }
+        // Login with username and password
+        post("/users/login") {
+            try {
+                val input = call.receive<UserLogin>()
+                service.checkUserNameAndPassword(input.username, input.password)?.let { user ->
+                    val token = tokenService.generateJWT(user)
+                    call.respond(HttpStatusCode.OK, UserWithTokenDto(user.toDto(), token))
+                }
+            } catch (ex: IllegalStateException) {
+                call.respond(HttpStatusCode.BadRequest)
+            } catch (ex: JsonConvertException) {
+                call.respond(HttpStatusCode.BadRequest)
+            }
         }
     }
 }

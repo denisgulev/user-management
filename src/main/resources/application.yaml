@@ -8,6 +8,9 @@ jwt:
   domain: "https://jwt-provider-domain/"
   audience: "jwt-audience"
   realm: "ktor sample app"
+  issuer: "jwt-issuer"
+  time: "jwt-time"
+  secret: "jwt-secret"
 db:
   mongo:
     user: myuser
@@ -16,4 +19,4 @@ db:
     port: 27017
     maxPoolSize: 20
     database:
-      name: users
+      name: user

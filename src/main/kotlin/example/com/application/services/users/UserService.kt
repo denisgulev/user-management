@@ -56,4 +56,11 @@ class UserService(
             return@withContext null
         }
     }
+
+    override suspend fun isAdmin(id: String): Boolean {
+//        logger.debug { "isAdmin: check if user is admin" }
+        return findUser(id)?.let {
+            it.role == User.Role.ADMIN
+        } ?: false
+    }
 }

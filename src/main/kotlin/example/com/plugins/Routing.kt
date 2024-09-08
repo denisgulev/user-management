@@ -7,10 +7,12 @@ import example.com.application.dto.UserWithTokenDto
 import example.com.application.mappers.toDto
 import example.com.application.mappers.toModel
 import example.com.application.services.tokens.TokenService
-import example.com.application.services.users.UserService
+import example.com.application.services.users.IUserService
 import io.ktor.http.*
 import io.ktor.serialization.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -18,8 +20,8 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
-    val service: UserService by inject()
-    val tokenService: TokenService by inject()
+    val service by inject<IUserService>()
+    val tokenService by inject<TokenService>()
 
     routing {
         swaggerUI(path = "swagger-ui", swaggerFile = "openapi/documentation.yaml") {
@@ -27,37 +29,6 @@ fun Application.configureRouting() {
         }
         get("/") {
             call.respondText("User management service!")
-        }
-        // Create user
-        post("/users") {
-            try {
-                val user = call.receive<UserCreate>().toModel()
-                service.createUser(user).let {
-                    call.respond(HttpStatusCode.Created, "Created user with id $it")
-                }
-            } catch (ex: IllegalStateException) {
-                call.respond(HttpStatusCode.BadRequest)
-            } catch (ex: JsonConvertException) {
-                call.respond(HttpStatusCode.BadRequest)
-            }
-        }
-        // Retrieve all users
-        get("/users") {
-            service.findAllUsers()
-            /*
-                    val userId = call.principal<JWTPrincipal>()
-                        ?.payload?.getClaim("userId")
-                        .toString().replace("\"", "").toLong()
-
-                    usersService.isAdmin(userId)
-                        .onSuccess {
-                            usersService.findAll().toList()
-                                .map { it.toDto() }
-                                .let { call.respond(HttpStatusCode.OK, it) }
-                        }.onFailure {
-                            handleUserError(it)
-                        }
-             */
         }
         // Retrieve a single user
         get("/users/{id?}") {
@@ -109,6 +80,47 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.BadRequest)
             } catch (ex: JsonConvertException) {
                 call.respond(HttpStatusCode.BadRequest)
+            }
+        }
+
+        authenticate {
+            // Retrieve all users
+            get("/users") {
+                val userId = call.principal<JWTPrincipal>()
+                    ?.payload?.getClaim("userId")
+                    .toString().replace("\"", "")
+
+                println("userID getUsers: $userId")
+
+                if (service.isAdmin(userId))
+                    service.findAllUsers().toList()
+                        .map { it.toDto() }
+                        .let { call.respond(HttpStatusCode.OK, it) }
+                else
+                    call.respond(HttpStatusCode.BadRequest, "User is not admin")
+            }
+            // Create user
+            post("/users") {
+                val userId = call.principal<JWTPrincipal>()
+                    ?.payload?.getClaim("userId")
+                    .toString().replace("\"", "")
+
+                println("userID createUsers: $userId")
+
+                if (service.isAdmin(userId)) {
+                    try {
+                        val user = call.receive<UserCreate>().toModel()
+                        service.createUser(user).let {
+                            call.respond(HttpStatusCode.Created, "Created user with id $it")
+                        }
+                    } catch (ex: IllegalStateException) {
+                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (ex: JsonConvertException) {
+                        call.respond(HttpStatusCode.BadRequest)
+                    }
+                }
+                else
+                    call.respond(HttpStatusCode.BadRequest, "User is not admin")
             }
         }
     }

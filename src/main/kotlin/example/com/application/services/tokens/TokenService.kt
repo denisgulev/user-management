@@ -24,6 +24,7 @@ class TokenService(
     private val myConfig: ApplicationConfig
 ) {
 
+    // Read the jwt property from the config file if you are using EngineMain
     val audience by lazy {
         myConfig.applicationConfiguration.propertyOrNull("jwt.audience")?.getString() ?: "jwt-audience"
     }

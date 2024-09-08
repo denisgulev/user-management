@@ -9,7 +9,9 @@
    - implemented a TokenService to handle the creation of a token on successful login of a user
    - implemented inject functionality using Koin [koin-integration](./implementations/koin-integration.md)
 
-3. Create an ADMIN user, which will be the only one to be able to create a user -> **TODO**
+3. Create an ADMIN user, which will be the only one to be able to create a user -> **~~TODO~~** **DONE**
+   
+   - endpoint "/users" with GET and POST operations were locked, requiring token + role authentication. See: [security](./implementations/security.md)
 
 4. Containerize the application, use ARGS / ENV to receive variables for mongo connection and jwt info -> **TODO**
 

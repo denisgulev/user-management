@@ -18,7 +18,7 @@ plugins {
     kotlin("jvm") version "2.0.0"
     id("io.ktor.plugin") version "2.3.12"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
-    id("com.google.devtools.ksp") version "2.0.0-1.0.23"
+    id("com.google.devtools.ksp") version "2.0.20-1.0.24"
 }
 
 group = "example.com"
@@ -62,6 +62,7 @@ dependencies {
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$micrologging_version")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 ksp {

@@ -1,0 +1,35 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DB_TYPE=${DB_TYPE}
+        - DB_URL=${DB_URL}
+        - DB_USER=${DB_USER}
+        - DB_PASSWORD=${DB_PASSWORD}
+        - DB_NAME=${DB_NAME}
+    depends_on:
+      db_mongo:
+        condition: service_started
+    ports:
+      - "8081:8080"
+
+  db_mongo:
+    image: mongo
+    volumes:
+      - mongodata:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "mongo --eval 'db.runCommand({ping: 1})'" ]
+      interval: 1s
+      retries: 30
+
+volumes:
+  mongodata:

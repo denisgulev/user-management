@@ -6,6 +6,7 @@ import example.com.application.dto.UserUpdate
 import example.com.application.dto.UserWithTokenDto
 import example.com.application.mappers.toDto
 import example.com.application.mappers.toModel
+import example.com.application.models.User
 import example.com.application.services.tokens.TokenService
 import example.com.application.services.users.IUserService
 import io.ktor.http.*
@@ -19,6 +20,13 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
+// Role check utility
+suspend fun ApplicationCall.hasPermission(service: IUserService, requiredRole: User.Role): Boolean {
+    val userId = principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString() ?: return false
+    val user = service.findUser(userId) ?: return false
+    return user.role == requiredRole
+}
+
 fun Application.configureRouting() {
     val service by inject<IUserService>()
     val tokenService by inject<TokenService>()
@@ -30,44 +38,7 @@ fun Application.configureRouting() {
         get("/") {
             call.respondText("User management service!")
         }
-        // Retrieve a single user
-        get("/users/{id?}") {
-            val id = call.parameters["id"]
-                ?: return@get call.respondText(
-                    text = "Missing id",
-                    status = HttpStatusCode.BadRequest
-                )
 
-            service.findUser(id)?.let {
-                call.respond(it.toDto())
-            } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
-        }
-        // Update user
-        patch("/users/{id?}") {
-            val id = call.parameters["id"]
-                ?: return@patch call.respondText(
-                    text = "ID not found",
-                    status = HttpStatusCode.NotFound
-                )
-            val user = call.receive<UserUpdate>()
-            service.findUser(id)?.let {
-                service.updateUser(id, it.copy(username = user.username, email = user.email))?.let {
-                    call.respond(HttpStatusCode.OK)
-                }
-            } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
-        }
-        // Delete user
-        delete("/users/{id?}") {
-            val id = call.parameters["id"]
-                ?: return@delete call.respondText(
-                    text = "ID not found",
-                    status = HttpStatusCode.NotFound
-                )
-            if (service.removeUser(id))
-                call.respond(HttpStatusCode.OK)
-            else
-                call.respond(HttpStatusCode.NotFound, "No records found for id $id")
-        }
         // Login with username and password
         post("/users/login") {
             try {
@@ -83,31 +54,66 @@ fun Application.configureRouting() {
             }
         }
 
+        // Retrieve a single user
         authenticate {
+            get("/users/{id}") {
+                val id = call.parameters["id"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing id")
+
+                if (call.hasPermission(service, User.Role.READ_ONLY)) {
+                    service.findUser(id)?.let {
+                        call.respond(it.toDto())
+                    } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
+                } else {
+                    call.respond(HttpStatusCode.Forbidden, "Insufficient permissions")
+                }
+            }
+
+            // Update user
+            patch("/users/{id}") {
+                val id = call.parameters["id"]
+                    ?: return@patch call.respond(HttpStatusCode.BadRequest, "Missing id")
+                val userUpdate = call.receive<UserUpdate>()
+
+                if (call.hasPermission(service, User.Role.ADMIN)) {
+                    service.findUser(id)?.let {
+                        service.updateUser(id, it.copy(username = userUpdate.username, email = userUpdate.email))
+                        call.respond(HttpStatusCode.OK)
+                    } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
+                } else {
+                    call.respond(HttpStatusCode.Forbidden, "Insufficient permissions")
+                }
+            }
+
+            // Delete user
+            delete("/users/{id}") {
+                val id = call.parameters["id"]
+                    ?: return@delete call.respond(HttpStatusCode.BadRequest, "Missing id")
+
+                if (call.hasPermission(service, User.Role.ADMIN)) {
+                    if (service.removeUser(id))
+                        call.respond(HttpStatusCode.OK)
+                    else
+                        call.respond(HttpStatusCode.NotFound, "No records found for id $id")
+                } else {
+                    call.respond(HttpStatusCode.Forbidden, "Insufficient permissions")
+                }
+            }
+
             // Retrieve all users
             get("/users") {
-                val userId = call.principal<JWTPrincipal>()
-                    ?.payload?.getClaim("userId")
-                    .toString().replace("\"", "")
-
-                println("userID getUsers: $userId")
-
-                if (service.isAdmin(userId))
+                if (call.hasPermission(service, User.Role.ADMIN)) {
                     service.findAllUsers().toList()
                         .map { it.toDto() }
                         .let { call.respond(HttpStatusCode.OK, it) }
-                else
-                    call.respond(HttpStatusCode.BadRequest, "User is not admin")
+                } else {
+                    call.respond(HttpStatusCode.Forbidden, "Insufficient permissions")
+                }
             }
+
             // Create user
             post("/users") {
-                val userId = call.principal<JWTPrincipal>()
-                    ?.payload?.getClaim("userId")
-                    .toString().replace("\"", "")
-
-                println("userID createUsers: $userId")
-
-                if (service.isAdmin(userId)) {
+                if (call.hasPermission(service, User.Role.ADMIN)) {
                     try {
                         val user = call.receive<UserCreate>().toModel()
                         service.createUser(user).let {
@@ -118,9 +124,9 @@ fun Application.configureRouting() {
                     } catch (ex: JsonConvertException) {
                         call.respond(HttpStatusCode.BadRequest)
                     }
+                } else {
+                    call.respond(HttpStatusCode.Forbidden, "Insufficient permissions")
                 }
-                else
-                    call.respond(HttpStatusCode.BadRequest, "User is not admin")
             }
         }
     }

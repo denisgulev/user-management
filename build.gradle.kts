@@ -1,23 +1,22 @@
-
-val kotlin_version: String by project
-val logback_version: String by project
-val mongo_version: String by project
-val ktor_version: String by project
+val kotlinVersion: String by project
+val logbackVersion: String by project
+val mongoVersion: String by project
+val ktorVersion: String by project
 
 // Koin
-val koin_ktor_version: String by project
-val koin_ksp_version: String by project
+val koinVersion: String by project
+val kspVersion: String by project
 
 // BCrypt
-val bcrypt_version: String by project
+val bcryptVersion: String by project
 
 // Logger
-val micrologging_version: String by project
+val microloggingVersion: String by project
 
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "2.0.20"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.20"
     id("io.ktor.plugin") version "2.3.12"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
     id("com.google.devtools.ksp") version "2.0.20-1.0.24"
 }
 
@@ -36,32 +35,37 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-swagger-jvm")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
-    implementation("io.ktor:ktor-server-auth-jvm")
-    implementation("io.ktor:ktor-server-auth-jwt-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation("io.ktor:ktor-server-config-yaml")
-    testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-swagger-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-config-yaml:$ktorVersion")
 
     //MongoDB
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.10.1")
 
     // Koin for Dependency Injection
-    implementation("io.insert-koin:koin-ktor:$koin_ktor_version") // Koin for Ktor
-    implementation("io.insert-koin:koin-logger-slf4j:$koin_ktor_version") // Koin Logger
-    implementation("io.insert-koin:koin-annotations:$koin_ksp_version") // Koin Annotations for KSP
-    ksp("io.insert-koin:koin-ksp-compiler:$koin_ksp_version")
+    implementation("io.insert-koin:koin-ktor:$koinVersion") // Koin for Ktor
+    implementation("io.insert-koin:koin-logger-slf4j:$koinVersion") // Koin Logger
+    implementation("io.insert-koin:koin-annotations:$kspVersion") // Koin Annotations for KSP
+    ksp("io.insert-koin:koin-ksp-compiler:$kspVersion")
 
     // BCrypt
-    implementation("com.ToxicBakery.library.bcrypt:bcrypt:$bcrypt_version")
+    implementation("com.ToxicBakery.library.bcrypt:bcrypt:$bcryptVersion")
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging-jvm:$micrologging_version")
+    implementation("io.github.microutils:kotlin-logging-jvm:$microloggingVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
+    // Kotlin Serialization JSON
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+    // Testing
+    testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
     implementation(kotlin("stdlib-jdk8"))
 }
 

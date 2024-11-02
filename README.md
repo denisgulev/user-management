@@ -13,7 +13,7 @@
    
    - endpoint "/users" with GET and POST operations were locked, requiring token + role authentication. See: [security](./implementations/security.md)
 
-4. Containerize the application, use ARGS / ENV to receive variables for mongo connection and jwt info -> **TODO**
+4. Containerize the application, use ARGS / ENV to receive variables for mongo connection and jwt info -> **~~TODO~~** **DONE**
 
 ---------
 
@@ -37,11 +37,19 @@ This microservice handles user authentication and authorization for your applica
     cd user-management
     ```
 
-2. **Setup MongoDB**:
-   Ensure you have MongoDB installed and running. You can use a local MongoDB instance or a cloud service like MongoDB Atlas.
+2. **Setup `.env`**:
 
-3. **Configure the application**:
-   Update the MongoDB connection string and JWT secret in `application.yaml` or directly in the code.
+   Populate the variables in the `.env` file with your MongoDB user, password and database name.
+
+3. **Update `init-mongo.js`**:
+
+   Use the same database name inside "init-mongo.js" file.
+
+   Visit [Bcrypt hashing](https://bcrypt.online/) to generate a hashed password for the admin user.
+
+   **|** make sure to write down this password, as it will be used to login as the admin user
+
+   Use the hash generated to replace **<ADMIN_HASH_PASSWORD>** in the "init-mongo.js" file.
 
 ### Build and Run
 
@@ -54,9 +62,9 @@ This microservice handles user authentication and authorization for your applica
 4. **Run the application**:
 
     ```
-    ./gradlew run
+    docker compose up -d
     ```
 
-The application will start on `http://localhost:8080`.
+The application will start on `http://localhost:8081`.
 
 

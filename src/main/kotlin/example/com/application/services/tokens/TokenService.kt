@@ -5,11 +5,10 @@ import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import example.com.application.config.ApplicationConfig
 import example.com.application.models.User
+import example.com.application.repository.UserRepositoryImpl
 import mu.KotlinLogging
 import org.koin.core.annotation.Single
 import java.util.*
-
-private val logger = KotlinLogging.logger {}
 
 /**
  * Token Exception
@@ -23,6 +22,10 @@ sealed class TokenException(message: String) : RuntimeException(message) {
 class TokenService(
     private val myConfig: ApplicationConfig
 ) {
+
+    companion object {
+        private val logger = KotlinLogging.logger(UserRepositoryImpl::class.java.name)
+    }
 
     // Read the jwt property from the config file if you are using EngineMain
     val audience by lazy {

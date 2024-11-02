@@ -10,11 +10,13 @@ data class User(
     val username: String,
     val email: String,
     val password: String,
-    val role: Role = Role.USER,
+    val role: Role = Role.READ_ONLY,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     val updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
-    enum class Role {
-        USER, ADMIN
+    enum class Role(val mongoRole: String) {
+        READ_ONLY("readOnlyAccess"),         // Maps to MongoDB read-only role
+        READ_WRITE("readWriteAccess"),       // Maps to MongoDB read-write role
+        ADMIN("admin")                       // Maps to MongoDB admin role if needed
     }
 }

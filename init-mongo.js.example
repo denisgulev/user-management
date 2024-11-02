@@ -1,0 +1,35 @@
+// Connect to the desired database
+db = db.getSiblingDB('<DB_NAME>');
+
+// Create a collection
+db.createCollection("users");
+db.createCollection("tasks");
+
+// Insert an admin user into the 'users' collection
+db.users.insertOne({
+    username: "admin",
+    email: "admin@example.com",
+    password: "<ADMIN_HASH_PASSWORD>", // Replace with the hashed password from the bcrypt script
+    role: "ADMIN",
+    createdAt: new Date(),
+    updatedAt: new Date()
+});
+
+// Create roles
+db.createRole({
+    role: "readWriteAccess",
+    privileges: [
+        { resource: { db: "taskManagement", collection: "tasks" }, actions: ["find", "insert", "update", "remove"] }
+    ],
+    roles: []
+});
+
+db.createRole({
+    role: "readOnlyAccess",
+    privileges: [
+        { resource: { db: "taskManagement", collection: "users" }, actions: ["find"] }
+    ],
+    roles: []
+});
+
+print("Initialization script executed successfully");

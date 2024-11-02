@@ -41,5 +41,4 @@ interface IUserService {
      */
     suspend fun checkUserNameAndPassword(username: String, password: String): User?
 
-    suspend fun isAdmin(id: String): Boolean
 }

@@ -12,6 +12,7 @@ import example.com.application.models.User
 import io.ktor.server.config.*
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
+import mu.KotlinLogging
 import org.bson.BsonValue
 import org.bson.types.ObjectId
 import org.koin.core.annotation.Single
@@ -22,8 +23,12 @@ class UserRepositoryImpl(
     appConfig: ApplicationConfig
 ) : IUserRepository {
 
-    private val userCollection = appConfig.applicationConfiguration.tryGetString("db.mongo.database.name") ?: "user"
-    private val db = mongoDatabase.getCollection<User>(userCollection)
+    companion object {
+        private val logger = KotlinLogging.logger(UserRepositoryImpl::class.java.name)
+    }
+
+    private val usersCollection = appConfig.applicationConfiguration.tryGetString("db.mongo.database.name") ?: "users"
+    private val db = mongoDatabase.getCollection<User>(usersCollection)
 
     override suspend fun insertOne(user: User): BsonValue? {
         try {

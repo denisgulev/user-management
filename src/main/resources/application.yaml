@@ -13,10 +13,8 @@ jwt:
   secret: "jwt-secret"
 db:
   mongo:
-    user: myuser
-    password: mypassword
-    host: localhost
-    port: 27017
-    maxPoolSize: 20
+    user: $DB_USER
+    password: $DB_PASSWORD
+    url: $DB_URL
     database:
-      name: user
+      name: $DB_NAME

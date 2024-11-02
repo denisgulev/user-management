@@ -22,7 +22,7 @@ data class UserCreate(
     val email: String,
     @NotNull
     val password: String,
-    val role: User.Role = User.Role.USER
+    val role: User.Role = User.Role.READ_ONLY
 )
 
 @Serializable

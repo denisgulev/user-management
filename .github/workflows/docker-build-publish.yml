@@ -1,0 +1,44 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Triggers on push to the main branch
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 3: Build the Docker image
+      - name: Build Docker Image
+        run: |
+          docker build \
+            --build-arg DB_TYPE=${{ secrets.DB_TYPE }} \
+            --build-arg DB_URL=${{ secrets.DB_URL }} \
+            --build-arg DB_USER=${{ secrets.DB_USER }} \
+            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            --build-arg DB_NAME=${{ secrets.DB_NAME }} \
+            -t user-management:latest .
+
+      # Step 4: Tag the Docker image for pushing
+      - name: Tag Docker Image
+        run: |
+          docker tag user-management:latest ${{ secrets.DOCKER_USERNAME }}/user-management:latest
+
+      # Step 5: Push the Docker image to the registry
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/user-management:latest

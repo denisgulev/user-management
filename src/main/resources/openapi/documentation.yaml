@@ -6,39 +6,74 @@ info:
     This Swagger documentation file outlines the API specifications for a User application built with Ktor and MongoDB. The API allows users to manage user records including creating new records, updating and deleting records by ID. The API uses the User data classes.
 
 paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Returns a welcome message for the User Management Service.
+      responses:
+        '200':
+          description: Successful response with welcome message.
+
+  /users/login:
+    post:
+      operationId: userLogin
+      summary: Login with username and password
+      description: Authenticates a user and returns a JWT token if successful.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful, JWT token returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithTokenDto'
+        '400':
+          description: Bad request, possibly due to malformed input.
+
   /users:
     post:
       operationId: createUser
-      summary: Create a new user record
+      summary: Create a new user
+      description: Creates a new user record. Requires admin permissions.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRequest'
+              $ref: '#/components/schemas/UserCreate'
       responses:
         '201':
-          description: User created successfully
+          description: User created successfully.
         '400':
-          description: Bad request
+          description: Bad request.
+        '403':
+          description: Insufficient permissions.
     get:
-      operationId: getUsers
-      summary: Create a new user record
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserRequest'
+      operationId: getAllUsers
+      summary: Retrieve all users
+      description: Returns a list of all users. Requires admin permissions.
       responses:
-        '201':
-          description: User created successfully
-        '400':
-          description: Bad request
+        '200':
+          description: List of all users returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Insufficient permissions.
+
   /users/{id?}:
     get:
       operationId: getUserById
       summary: Retrieve user record by ID
+      description: Retrieves the user record by ID. Requires read-only permissions.
       parameters:
         - name: id
           in: path
@@ -48,34 +83,24 @@ paths:
             type: string
       responses:
         '200':
-          description: Successful response
+          description: User record found.
           content:
             application/json:
               schema:
                 $ref: '#components/schemas/UserResponse'
         '404':
-          description: User not found
-    delete:
-      operationId: deleteUserById
-      summary: Delete user record by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: User deleted successfully
-        '400':
-          description: Bad request
-        '404':
-          description: User not found
+          description: User not found.
+        '403':
+          description: Insufficient permissions.
+
     patch:
-      summary: Update user record by ID
+      operationId: updateUserById
+      summary: Update a user by ID
+      description: Updates a user's information. Requires admin permissions.
       parameters:
         - name: id
           in: path
+          description: User ID
           required: true
           schema:
             type: string
@@ -87,11 +112,32 @@ paths:
               $ref: '#/components/schemas/UserUpdate'
       responses:
         '200':
-          description: User updated successfully
+          description: User updated successfully.
         '400':
-          description: Bad request
+          description: Bad request.
         '404':
-          description: User not found
+          description: User not found.
+        '403':
+          description: Insufficient permissions.
+
+    delete:
+      operationId: deleteUserById
+      summary: Delete a user by ID
+      description: Deletes a user by ID. Requires admin permissions.
+      parameters:
+        - name: id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully.
+        '404':
+          description: User not found.
+        '403':
+          description: Insufficient permissions.
 
 components:
   schemas:
@@ -122,15 +168,12 @@ components:
           type: string
         email:
           type: string
-        passwordHash:
-          type: string
       required:
         - id
         - username
         - email
-        - passwordHash
 
-    UserRequest:
+    UserCreate:
       type: object
       properties:
         username:

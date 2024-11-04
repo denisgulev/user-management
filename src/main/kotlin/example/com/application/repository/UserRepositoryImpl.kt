@@ -7,9 +7,7 @@ import com.mongodb.client.model.ReturnDocument
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import com.toxicbakery.bcrypt.Bcrypt
-import example.com.application.config.ApplicationConfig
 import example.com.application.models.User
-import io.ktor.server.config.*
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
@@ -19,16 +17,14 @@ import org.koin.core.annotation.Single
 
 @Single
 class UserRepositoryImpl(
-    mongoDatabase: MongoDatabase,
-    appConfig: ApplicationConfig
+    mongoDatabase: MongoDatabase
 ) : IUserRepository {
 
     companion object {
         private val logger = KotlinLogging.logger(UserRepositoryImpl::class.java.name)
     }
 
-    private val usersCollection = appConfig.applicationConfiguration.tryGetString("db.mongo.database.name") ?: "users"
-    private val db = mongoDatabase.getCollection<User>(usersCollection)
+    private val db = mongoDatabase.getCollection<User>("users")
 
     override suspend fun insertOne(user: User): BsonValue? {
         try {

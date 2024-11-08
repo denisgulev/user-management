@@ -34,13 +34,13 @@ class TokenService(
     val realm by lazy {
         myConfig.applicationConfiguration.propertyOrNull("jwt.realm")?.getString() ?: "jwt-realm"
     }
-    private val issuer by lazy {
+    val issuer by lazy {
         myConfig.applicationConfiguration.propertyOrNull("jwt.issuer")?.getString() ?: "jwt-issuer"
     }
-    private val expiresIn by lazy {
-        myConfig.applicationConfiguration.propertyOrNull("jwt.time")?.getString()?.toLong() ?: 3600
+    val expiresIn by lazy {
+        myConfig.applicationConfiguration.propertyOrNull("jwt.time")?.getString()?.toLong() ?: 3600000000
     }
-    private val secret by lazy {
+    val secret by lazy {
         myConfig.applicationConfiguration.propertyOrNull("jwt.secret")?.getString() ?: "jwt-secret"
     }
 
@@ -60,9 +60,8 @@ class TokenService(
             .withSubject("Authentication")
             // user claims and other data to store
             .withClaim("username", user.username)
-            .withClaim("email", user.email)
             .withClaim("userId", user.id.toString())
-            .withClaim("realm", realm)
+            .withClaim("role", user.role.name)
             // expiration time from currentTimeMillis + (time in seconds) * 1000 (to millis)
             .withExpiresAt(Date(System.currentTimeMillis() + expiresIn * 1000L))
             // sign with secret

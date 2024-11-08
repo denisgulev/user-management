@@ -18,7 +18,10 @@ import io.ktor.server.plugins.swagger.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import mu.KotlinLogging
 import org.koin.ktor.ext.inject
+
+private val logger = KotlinLogging.logger {}
 
 suspend fun ApplicationCall.isAuthorized(service: IUserService, requiredRole: User.Role): Boolean {
     val userId = principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString() ?: return false
@@ -27,8 +30,14 @@ suspend fun ApplicationCall.isAuthorized(service: IUserService, requiredRole: Us
 }
 
 suspend fun ApplicationCall.hasPermission(service: IUserService, action: String): Boolean {
-    val userId = principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString() ?: return false
+    val principal = principal<JWTPrincipal>()
+    if (principal == null) {
+        logger.warn { "JWTPrincipal is null, indicating failed JWT validation." }
+        return false
+    }
+    val userId = principal.payload.getClaim("userId").asString()
     val user = service.findUser(userId) ?: return false
+
     return user.permission == User.Permission.ALL || user.permission == User.Permission.valueOf(action.uppercase())
 }
 
@@ -60,8 +69,8 @@ fun Application.configureRouting() {
         }
 
         authenticate {
-            get("/users/has-permission") {
-                val action = call.request.queryParameters["action"]
+            get("/users/has-permission/{action}") {
+                val action = call.parameters["action"]
                     ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing action")
 
                 if (call.hasPermission(service, action)) {

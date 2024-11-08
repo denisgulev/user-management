@@ -16,16 +16,22 @@ fun Application.configureSecurity() {
             // verify a token format and its signature
             verifier(jwtService.verifyJWT())
             validate { credential ->
-                if (credential.payload.audience.contains(jwtService.audience)
-                    && credential.payload.getClaim("username").asString().isNotEmpty()
-                    )
+                println("Validating JWT - Audience: ${credential.payload.audience}")
+                println("Validating JWT - Claims: ${credential.payload.claims}")
+
+                // Validate audience, issuer, and userId claim
+                if (credential.payload.audience.contains(jwtService.audience) &&
+                    credential.payload.issuer == jwtService.issuer &&
+                    credential.payload.getClaim("userId").asString().isNotBlank()
+                ) {
                     JWTPrincipal(credential.payload)
-                else
-                    null
+                } else {
+                    null // Invalid JWT, unauthorized
+                }
             }
             // challenge configures a response to be sent back in case authentication fails
-            challenge { defaultSchema, realm ->
-                throw TokenException.InvalidTokenException("Token is not valid or has expired")
+            challenge { _, _ ->
+                throw TokenException.InvalidTokenException("Invalid or expired token")
             }
         }
     }

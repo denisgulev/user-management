@@ -9,7 +9,7 @@ jwt:
   audience: "jwt-audience"
   realm: "ktor sample app"
   issuer: "jwt-issuer"
-  time: 3600
+  time: 3600000000
   secret: "jwt-secret"
 db:
   mongo:

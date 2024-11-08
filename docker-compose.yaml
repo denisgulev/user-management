@@ -13,7 +13,7 @@ services:
       db_mongo:
         condition: service_started
     ports:
-      - "8081:8080"
+      - "8082:8080"
 
   db_mongo:
     image: mongo

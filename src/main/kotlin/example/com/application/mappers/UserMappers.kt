@@ -11,7 +11,8 @@ fun User.toDto() = UserResponse(
     email = this.email,
     role = this.role,
     createdAt = this.createdAt.toString(),
-    updatedAt = this.updatedAt.toString()
+    updatedAt = this.updatedAt.toString(),
+    permission = this.permission
 )
 
 fun UserCreate.toModel() = User(
@@ -19,5 +20,6 @@ fun UserCreate.toModel() = User(
     username = this.username,
     email = this.email,
     password = this.password,
-    role = this.role
+    role = this.role,
+    permission = this.permission
 )

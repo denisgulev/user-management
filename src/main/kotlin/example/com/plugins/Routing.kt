@@ -20,11 +20,16 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
-// Role check utility
-suspend fun ApplicationCall.hasPermission(service: IUserService, requiredRole: User.Role): Boolean {
+suspend fun ApplicationCall.isAuthorized(service: IUserService, requiredRole: User.Role): Boolean {
     val userId = principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString() ?: return false
     val user = service.findUser(userId) ?: return false
     return user.role == requiredRole
+}
+
+suspend fun ApplicationCall.hasPermission(service: IUserService, action: String): Boolean {
+    val userId = principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString() ?: return false
+    val user = service.findUser(userId) ?: return false
+    return user.permission == User.Permission.ALL || user.permission == User.Permission.valueOf(action.uppercase())
 }
 
 fun Application.configureRouting() {
@@ -54,13 +59,23 @@ fun Application.configureRouting() {
             }
         }
 
-        // Retrieve a single user
         authenticate {
+            get("/users/has-permission") {
+                val action = call.request.queryParameters["action"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing action")
+
+                if (call.hasPermission(service, action)) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.Unauthorized, "Insufficient permissions")
+                }
+            }
+
             get("/users/{id}") {
                 val id = call.parameters["id"]
                     ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing id")
 
-                if (call.hasPermission(service, User.Role.READ_ONLY)) {
+                if (call.isAuthorized(service, User.Role.ADMIN)) {
                     service.findUser(id)?.let {
                         call.respond(it.toDto())
                     } ?: call.respond(HttpStatusCode.NotFound, "No records found for id $id")
@@ -75,7 +90,7 @@ fun Application.configureRouting() {
                     ?: return@patch call.respond(HttpStatusCode.BadRequest, "Missing id")
                 val userUpdate = call.receive<UserUpdate>()
 
-                if (call.hasPermission(service, User.Role.ADMIN)) {
+                if (call.isAuthorized(service, User.Role.ADMIN)) {
                     service.findUser(id)?.let {
                         service.updateUser(id, it.copy(username = userUpdate.username, email = userUpdate.email))
                         call.respond(HttpStatusCode.OK)
@@ -90,7 +105,7 @@ fun Application.configureRouting() {
                 val id = call.parameters["id"]
                     ?: return@delete call.respond(HttpStatusCode.BadRequest, "Missing id")
 
-                if (call.hasPermission(service, User.Role.ADMIN)) {
+                if (call.isAuthorized(service, User.Role.ADMIN)) {
                     if (service.removeUser(id))
                         call.respond(HttpStatusCode.OK)
                     else
@@ -102,7 +117,7 @@ fun Application.configureRouting() {
 
             // Retrieve all users
             get("/users") {
-                if (call.hasPermission(service, User.Role.ADMIN)) {
+                if (call.isAuthorized(service, User.Role.ADMIN)) {
                     service.findAllUsers().toList()
                         .map { it.toDto() }
                         .let { call.respond(HttpStatusCode.OK, it) }
@@ -113,7 +128,7 @@ fun Application.configureRouting() {
 
             // Create user
             post("/users") {
-                if (call.hasPermission(service, User.Role.ADMIN)) {
+                if (call.isAuthorized(service, User.Role.ADMIN)) {
                     try {
                         val user = call.receive<UserCreate>().toModel()
                         service.createUser(user).let {

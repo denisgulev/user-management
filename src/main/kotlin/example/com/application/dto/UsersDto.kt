@@ -10,6 +10,7 @@ data class UserResponse(
     val username: String,
     val email: String,
     val role: User.Role,
+    val permission: User.Permission,
     val createdAt: String,
     val updatedAt: String
 )
@@ -22,7 +23,8 @@ data class UserCreate(
     val email: String,
     @NotNull
     val password: String,
-    val role: User.Role = User.Role.READ_ONLY
+    val role: User.Role = User.Role.USER,
+    val permission: User.Permission = User.Permission.VIEW
 )
 
 @Serializable
@@ -30,7 +32,9 @@ data class UserUpdate(
     @NotNull
     val username: String,
     @NotNull
-    val email: String
+    val email: String,
+    @NotNull
+    val permission: User.Permission
 )
 
 @Serializable

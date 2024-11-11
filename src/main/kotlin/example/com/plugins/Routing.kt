@@ -29,16 +29,16 @@ suspend fun ApplicationCall.isAuthorized(service: IUserService, vararg requiredR
     return user.role in requiredRoles
 }
 
-suspend fun ApplicationCall.hasPermission(service: IUserService, action: String): Boolean {
+suspend fun ApplicationCall.hasPermission(service: IUserService, action: String): Pair<Boolean, String> {
     val principal = principal<JWTPrincipal>()
     if (principal == null) {
         logger.warn { "JWTPrincipal is null, indicating failed JWT validation." }
-        return false
+        return Pair(false, "")
     }
     val userId = principal.payload.getClaim("userId").asString()
-    val user = service.findUser(userId) ?: return false
+    val user = service.findUser(userId) ?: return Pair(false, "")
 
-    return user.permission == User.Permission.ALL || user.permission == User.Permission.valueOf(action.uppercase())
+    return Pair(user.permission == User.Permission.ALL || user.permission == User.Permission.valueOf(action.uppercase()), userId)
 }
 
 fun Application.configureRouting() {
@@ -73,8 +73,11 @@ fun Application.configureRouting() {
                 val action = call.parameters["action"]
                     ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing action")
 
-                if (call.hasPermission(service, action)) {
-                    call.respond(HttpStatusCode.OK)
+                val (hasPermission, userId) = call.hasPermission(service, action)
+                logger.info { "User $userId has permission to $action: $hasPermission" }
+
+                if (hasPermission) {
+                    call.respond(HttpStatusCode.OK, userId)
                 } else {
                     call.respond(HttpStatusCode.Unauthorized, "Insufficient permissions")
                 }
